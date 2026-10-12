@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#191b1e">
+  <meta name="monitor-token" content="__MONITOR_TOKEN__">
+  <meta name="monitor-language" content="__MONITOR_LANGUAGE__">
+  <meta name="description" content="Monitor SSH servers, WSL and this computer: CPU, memory, swap and disk.">
+  <title>Server monitor</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="icon-cpu" viewBox="0 0 24 24"><path d="M5 19a9 9 0 1 1 14 0H5Z"/><path d="m12 13 4-5M5 12h1m12 0h1M8 6l.6 1M12 4v2m4-0.5-.6 1"/><circle cx="12" cy="13" r="1"/></symbol>
+    <symbol id="icon-memory" viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="1"/><path d="M5 9h14M5 15h14M8 6h3m-3 6h3m-3 6h3"/></symbol>
+    <symbol id="icon-swap" viewBox="0 0 24 24"><path d="M4 9h16M4 9l5-5m11 11H4m16 0-5 5"/></symbol>
+    <symbol id="icon-disk" viewBox="0 0 24 24"><rect x="4.5" y="2.5" width="15" height="19" rx="1"/><path d="M4.5 12h15M8 7h3m-3 10h3"/><path d="M16.5 7h.01m-.01 10h.01"/></symbol>
+    <symbol id="icon-server" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="7" rx="1.5"/><rect x="4" y="14" width="16" height="7" rx="1.5"/><path d="M8 6.5h.01M8 17.5h.01M12 6.5h5M12 17.5h5"/></symbol>
+    <symbol id="icon-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+    <symbol id="icon-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z"/></symbol>
+    <symbol id="icon-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 7a7 7 0 0 1 11.7-1L20 9M4 15l2.3 3A7 7 0 0 0 18 17"/></symbol>
+    <symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="icon-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/></symbol>
+    <symbol id="icon-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="icon-sidebar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></symbol>
+  </svg>
+
+  <div class="app-shell">
+  <aside id="server-sidebar" class="server-sidebar" aria-labelledby="servers-title">
+    <header class="sidebar-heading"><svg class="icon" aria-hidden="true"><use href="#icon-server"/></svg><h2 id="servers-title" data-i18n="servers">Servers</h2></header>
+    <nav id="server-list" class="server-list" aria-label="Servers" data-i18n-aria="servers"></nav>
+    <p class="sidebar-note" data-i18n="allCollect">All servers keep collecting</p>
+  </aside>
+  <main class="dashboard">
+    <header class="topbar">
+      <div class="server-heading">
+        <button id="sidebar-toggle" class="app-mark" type="button" aria-controls="server-sidebar" aria-expanded="true" aria-label="Hide server list"><svg class="icon" aria-hidden="true"><use href="#icon-sidebar"/></svg></button>
+        <div class="heading-copy">
+          <p class="eyebrow"><span data-i18n="appTitle">Server monitor</span> <span id="demo-badge" class="demo-badge" data-i18n="demo" hidden>Demo</span></p>
+          <div class="heading-line"><h1 id="server-alias">Connecting…</h1><span id="connection-status" class="connection-status" data-state="connecting"><span class="status-dot"></span><span id="connection-label">Connecting</span></span></div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <span class="refresh-cadence"><svg class="icon" aria-hidden="true"><use href="#icon-clock"/></svg><span id="refresh-cadence">Every 2 s</span></span>
+        <button id="pause-button" class="control-button" type="button" disabled aria-pressed="false"><svg class="icon" aria-hidden="true"><use id="pause-icon" href="#icon-pause"/></svg><span id="pause-label">Pause</span></button>
+        <button id="reconnect-button" class="control-button reconnect-button" type="button"><svg class="icon" aria-hidden="true"><use href="#icon-refresh"/></svg><span id="reconnect-label">Reconnect</span></button>
+        <button id="language-toggle" class="control-button language-control" type="button" aria-label="Switch to English">RU</button>
+      </div>
+    </header>
+
+    <div class="notices" aria-live="polite" aria-atomic="true">
+      <div id="demo-notice" class="notice notice-demo" hidden><svg class="icon" aria-hidden="true"><use href="#icon-info"/></svg><span data-i18n="demoNotice">Demo mode. Data is generated locally.</span></div>
+      <div id="status-notice" class="notice" data-tone="info"><svg class="icon" aria-hidden="true"><use href="#icon-info"/></svg><span id="status-message">Connecting to the monitor…</span></div>
+      <div id="pause-notice" class="notice notice-paused" hidden><svg class="icon" aria-hidden="true"><use href="#icon-pause"/></svg><span data-i18n="pauseNotice">View paused. Data collection continues.</span><span id="pause-time" class="notice-tail"></span></div>
+    </div>
+
+    <section class="metrics-grid" aria-label="Server resources" data-i18n-aria="resources">
+      <button class="metric-card is-selected" data-metric="cpu" type="button" aria-pressed="true" aria-controls="history-panel">
+        <span class="metric-heading"><svg class="icon" aria-hidden="true"><use href="#icon-cpu"/></svg><span>CPU</span><svg class="icon metric-chevron" aria-hidden="true"><use href="#icon-chevron"/></svg></span>
+        <span class="metric-reading"><span class="metric-value" id="cpu-value">—</span><span class="metric-unit" id="cpu-unit" hidden>%</span></span>
+        <span class="metric-detail" id="cpu-detail">Waiting for the first sample</span>
+        <span class="metric-stats"><span>Average <strong id="cpu-average">—</strong></span><span>Peak <strong id="cpu-peak">—</strong></span></span>
+        <span class="sparkline"><svg id="cpu-sparkline" viewBox="0 0 1000 180" preserveAspectRatio="none" aria-hidden="true"></svg><span id="cpu-empty" class="sparkline-empty">No data yet</span></span>
+      </button>
+      <button class="metric-card" data-metric="memory" type="button" aria-pressed="false" aria-controls="history-panel">
+        <span class="metric-heading"><svg class="icon" aria-hidden="true"><use href="#icon-memory"/></svg><span>Memory</span><svg class="icon metric-chevron" aria-hidden="true"><use href="#icon-chevron"/></svg></span>
+        <span class="metric-reading"><span class="metric-value" id="memory-value">—</span><span class="metric-unit" id="memory-unit" hidden>%</span></span>
+        <span class="metric-detail" id="memory-detail">Waiting for the first sample</span>
+        <span class="metric-stats"><span>Average <strong id="memory-average">—</strong></span><span>Peak <strong id="memory-peak">—</strong></span></span>
+        <span class="sparkline"><svg id="memory-sparkline" viewBox="0 0 1000 180" preserveAspectRatio="none" aria-hidden="true"></svg><span id="memory-empty" class="sparkline-empty">No data yet</span></span>
+      </button>
+      <button class="metric-card" data-metric="swap" type="button" aria-pressed="false" aria-controls="history-panel">
+        <span class="metric-heading"><svg class="icon" aria-hidden="true"><use href="#icon-swap"/></svg><span>Swap</span><svg class="icon metric-chevron" aria-hidden="true"><use href="#icon-chevron"/></svg></span>
+        <span class="metric-reading"><span class="metric-value" id="swap-value">—</span><span class="metric-unit" id="swap-unit" hidden>%</span></span>
+        <span class="metric-detail" id="swap-detail">Waiting for the first sample</span>
+        <span class="metric-stats"><span>Average <strong id="swap-average">—</strong></span><span>Peak <strong id="swap-peak">—</strong></span></span>
+        <span class="sparkline"><svg id="swap-sparkline" viewBox="0 0 1000 180" preserveAspectRatio="none" aria-hidden="true"></svg><span id="swap-empty" class="sparkline-empty">No data yet</span></span>
+      </button>
+      <button class="metric-card" data-metric="disk" type="button" aria-pressed="false" aria-controls="history-panel">
+        <span class="metric-heading"><svg class="icon" aria-hidden="true"><use href="#icon-disk"/></svg><span>Disk</span><svg class="icon metric-chevron" aria-hidden="true"><use href="#icon-chevron"/></svg></span>
+        <span class="metric-reading"><span class="metric-value" id="disk-value">—</span><span class="metric-unit" id="disk-unit" hidden>%</span></span>
+        <span class="metric-detail" id="disk-detail">Waiting for the first sample</span>
+        <span class="metric-stats"><span>Free <strong id="disk-free">—</strong></span><span>Average <strong id="disk-average">—</strong></span></span>
+        <span class="sparkline"><svg id="disk-sparkline" viewBox="0 0 1000 180" preserveAspectRatio="none" aria-hidden="true"></svg><span id="disk-empty" class="sparkline-empty">No data yet</span></span>
+      </button>
+    </section>
+
+    <div class="detail-grid">
+      <section id="history-panel" class="panel history-panel" aria-labelledby="history-title">
+        <header class="panel-heading history-heading">
+          <div><p class="eyebrow" data-i18n="resourceHistory">Resource history</p><h2 id="history-title">CPU utilization</h2></div>
+          <div class="time-controls" role="group" aria-label="History window" data-i18n-aria="historyWindow">
+            <button type="button" data-minutes="5" class="is-active" aria-pressed="true">5 min</button>
+            <button type="button" data-minutes="15" aria-pressed="false">15 min</button>
+            <button type="button" data-minutes="60" aria-pressed="false">1 hour</button>
+          </div>
+        </header>
+        <div class="history-summary">
+          <div class="history-current"><span class="legend-dot"></span><span id="history-current-label">Now</span><strong id="history-current">—</strong></div>
+          <div><span>Average</span><strong id="history-average">—</strong></div>
+          <div><span>Peak</span><strong id="history-peak">—</strong></div>
+        </div>
+        <div class="history-chart">
+          <div class="y-axis" aria-hidden="true"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div>
+          <div id="plot-frame" class="plot-frame" tabindex="0" role="group" aria-label="CPU utilization chart" aria-describedby="chart-help history-description">
+            <svg id="history-svg" viewBox="0 0 1000 260" preserveAspectRatio="none" aria-hidden="true"></svg>
+            <div id="history-empty" class="history-empty"><span class="empty-chart-icon" aria-hidden="true"><svg class="icon"><use href="#icon-cpu"/></svg></span><strong id="history-empty-title">Waiting for the first sample</strong><span id="history-empty-detail">History appears after connecting to the server.</span></div>
+            <div id="chart-crosshair" class="chart-crosshair" hidden></div>
+            <div id="chart-dot" class="chart-dot" hidden></div>
+            <div id="chart-tooltip" class="chart-tooltip" hidden><span id="tooltip-time"></span><strong id="tooltip-value"></strong></div>
+          </div>
+          <div class="x-axis" id="x-axis" aria-hidden="true"><span>—</span><span>—</span><span>—</span><span>—</span><span>—</span></div>
+        </div>
+        <div class="chart-footer"><span class="mean-legend"><span aria-hidden="true"></span><span data-i18n="periodMean">Period average</span></span><span id="sample-count">No samples</span></div>
+        <p class="sr-only" id="chart-help" data-i18n="chartHelp">Use the left and right arrows to explore samples. Home selects the first sample, End the last. Escape closes the tooltip.</p>
+        <p class="sr-only" id="history-description">No data yet.</p>
+        <p class="sr-only" id="keyboard-reading" aria-live="polite"></p>
+      </section>
+
+      <div class="side-panels">
+      <section class="panel processes-panel" aria-labelledby="processes-title">
+        <header class="panel-heading"><h2 id="processes-title" data-i18n="processes">Top 5 processes</h2><span id="process-cpu-note" class="panel-note" data-i18n="lifetimeAverage">CPU: lifetime average</span></header>
+        <div class="process-table-wrap"><table class="process-table"><thead><tr><th data-i18n="process">Process</th><th>PID</th><th id="process-cpu-heading" aria-sort="descending"><button type="button" data-process-sort="cpu_percent"><span data-i18n="cpuLabel">CPU</span><span class="sort-arrow" aria-hidden="true">↓</span></button></th><th id="process-memory-heading" aria-sort="none"><button type="button" data-process-sort="memory_bytes"><span data-i18n="memoryLabel">Memory</span><span class="sort-arrow" aria-hidden="true">↓</span></button></th></tr></thead><tbody id="process-list"></tbody></table><p id="process-empty" class="panel-empty">Waiting for the first sample</p></div>
+      </section>
+      <aside class="panel facts-panel" aria-labelledby="facts-title">
+        <header class="panel-heading"><h2 id="facts-title" data-i18n="aboutServer">Server details</h2><span class="protocol-badge">SSH</span></header>
+        <dl class="server-facts">
+          <div><dt data-i18n="hostname">Hostname</dt><dd id="fact-hostname">—</dd></div>
+          <div><dt data-i18n="system">System</dt><dd id="fact-os">—</dd></div>
+          <div><dt data-i18n="kernel">Kernel</dt><dd id="fact-kernel">—</dd></div>
+          <div><dt data-i18n="architecture">Architecture</dt><dd id="fact-arch">—</dd></div>
+          <div><dt data-i18n="logicalCpu">Logical CPUs</dt><dd id="fact-cores">—</dd></div>
+          <div><dt data-i18n="uptime">Uptime</dt><dd id="fact-uptime">—</dd></div>
+          <div class="load-fact"><dt data-i18n="load">Load 1 / 5 / 15 min</dt><dd id="fact-load">—</dd></div>
+          <div><dt data-i18n="iowaitSteal">I/O wait / steal</dt><dd id="fact-cpu-wait">—</dd></div>
+        </dl>
+        <div class="disk-location"><svg class="icon" aria-hidden="true"><use href="#icon-disk"/></svg><div><span data-i18n="filesystem">Filesystem</span><strong id="fact-disk">—</strong></div><span id="fact-disk-path" class="path-badge" hidden></span></div>
+      </aside>
+      </div>
+      <section id="traffic-panel" class="panel traffic-panel" aria-labelledby="traffic-title" hidden>
+        <header class="panel-heading"><h2 id="traffic-title" data-i18n="traffic">Traffic over 7 days</h2><div id="interface-picker" class="interface-picker"><button id="traffic-interface" class="interface-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="interface-options" aria-label="Network interface" data-i18n-aria="interface"><span id="interface-name">—</span><span aria-hidden="true">⌄</span></button><div id="interface-options" class="interface-options" role="listbox" aria-label="Network interface" data-i18n-aria="interface" hidden></div></div></header>
+        <div class="traffic-summary"><span><span class="rx-dot"></span><span data-i18n="received">Received</span><strong id="traffic-rx">—</strong></span><span><span class="tx-dot"></span><span data-i18n="sent">Sent</span><strong id="traffic-tx">—</strong></span></div>
+        <div id="traffic-days" class="traffic-days"></div>
+        <div id="traffic-day-detail" class="traffic-day-detail" role="status" aria-live="polite"></div>
+        <p class="traffic-caption"><span id="traffic-period">vnStat</span><span id="traffic-updated">—</span></p>
+      </section>
+    </div>
+
+    <footer class="page-footer"><span id="last-update">Waiting for data</span></footer>
+  </main>
+  </div>
+  <noscript><div class="noscript-notice">Enable JavaScript and reload the page to display monitoring data.</div></noscript>
+</body>
+</html>

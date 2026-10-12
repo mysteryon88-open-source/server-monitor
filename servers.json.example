@@ -1,0 +1,4 @@
+{
+  "Production": "my-server",
+  "Backup": "my-backup"
+}

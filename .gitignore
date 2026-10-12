@@ -1,0 +1,41 @@
+# Local configuration (keep distributable examples)
+.env
+.env.*
+!.env.example
+/servers.json
+
+# Runtime, logs and Python caches
+.runtime/
+logs/
+*.log
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local tooling and generated files
+node_modules/
+.codex/
+.codegraph/
+.idea/
+.vscode/
+/dist/
+/build/
+*.zip
+*.tmp
+*.bak
+Thumbs.db
+.DS_Store
+
+# Private SSH material
+.ssh/
+*.pem
+*.key
+*.ppk
+id_rsa
+id_ed25519
+id_ecdsa
+id_dsa
