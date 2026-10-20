@@ -26,6 +26,7 @@
     processesUnavailable: ["Список процессов недоступен", "Process list unavailable"], processesEmpty: ["Нет доступных процессов", "No available processes"],
     sortCpu: ["Показать пять процессов с наибольшей загрузкой ЦП", "Show the five highest CPU consumers"], sortMemory: ["Показать пять процессов с наибольшим потреблением памяти", "Show the five highest memory consumers"],
     aboutServer: ["О сервере", "Server details"], hostname: ["Имя хоста", "Hostname"], system: ["Система", "System"], kernel: ["Ядро", "Kernel"], architecture: ["Архитектура", "Architecture"], logicalCpu: ["Логических ЦП", "Logical CPUs"], uptime: ["Работает", "Uptime"], load: ["Нагрузка 1 / 5 / 15 мин", "Load 1 / 5 / 15 min"], iowaitSteal: ["I/O wait / steal", "I/O wait / steal"], filesystem: ["Файловая система", "Filesystem"],
+    cpuTemperature: ["Температура ЦП", "CPU temperature"],
     traffic: ["Трафик за 7 дней", "Traffic over 7 days"], interface: ["Сетевой интерфейс", "Network interface"], received: ["Получено", "Received"], sent: ["Отправлено", "Sent"], trafficUpdated: ["Обновлено {time}", "Updated {time}"], missingTraffic: ["Нет измерения", "No measurement"],
     trafficHint: ["Нажмите на день, чтобы увидеть объём трафика", "Select a day to see traffic amounts"], total: ["Всего", "Total"],
     hourHistory: ["История за последний час", "Last hour of history"], localTime: ["Время на этом компьютере", "This computer's time"], localTimeTitle: ["Время измерений отображается в часовом поясе этого браузера", "Sample times use this browser's time zone"],
@@ -402,6 +403,10 @@
     setText("fact-disk-path", safeText(latest?.disk?.path));
     $("fact-disk-path").hidden = typeof latest?.disk?.path !== "string";
     $("fact-disk-path").title = safeText(latest?.disk?.path, "");
+    const temperature = latest?.cpu?.temperature_c;
+    const hasTemperature = isNumber(temperature) && temperature >= 0;
+    $("temperature-reading").hidden = !hasTemperature;
+    setText("fact-temperature", hasTemperature ? decimal(temperature, 1) + " °C" : "—");
     document.querySelectorAll(".server-facts dd").forEach((node) => { node.title = node.textContent; });
   }
 

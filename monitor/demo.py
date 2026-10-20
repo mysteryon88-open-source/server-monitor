@@ -48,7 +48,7 @@ def demo_sample(timestamp: float, variant: int = 0) -> dict:
     return {
         'ts': round(timestamp * 1000),
         'cpu': {'percent': cpu, 'cores': (2, 4, 8)[variant], 'mhz': 2590.0,
-                'model': 'Virtual CPU', 'iowait': 0.2, 'steal': 0.0},
+                'model': 'Virtual CPU', 'iowait': 0.2, 'steal': 0.0, 'temperature_c': None},
         'memory': {'percent': round(memory_percent, 1), 'used': memory_used,
                    'total': memory_total, 'available': memory_total - memory_used},
         'swap': {'percent': round(100 * swap_used / swap_total, 1),

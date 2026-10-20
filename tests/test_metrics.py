@@ -60,6 +60,25 @@ def frame(
 
 
 class ParseFrameTests(unittest.TestCase):
+    def test_temperature_is_available_before_cpu_delta_and_updates_each_frame(self):
+        calc = MetricCalculator()
+        for index, value in enumerate((53.5, 54.2, 0)):
+            with self.subTest(value=value):
+                raw = parse_frame(frame() + "\ntemperature_c\t" + str(value))
+                sample = calc.update(raw, timestamp=index + 1)
+                self.assertEqual(sample["cpu"]["temperature_c"], value)
+
+    def test_missing_or_invalid_temperature_does_not_reuse_a_previous_reading(self):
+        for value in (None, "", "bad", "NaN", "inf", "-1", "53.5'C"):
+            with self.subTest(value=value):
+                calc = MetricCalculator()
+                calc.update(parse_frame(frame() + "\ntemperature_c\t53.5"), timestamp=1)
+                source = frame() if value is None else frame() + "\ntemperature_c\t" + value
+                sample = calc.update(parse_frame(source), timestamp=2)
+                self.assertIsNone(sample["cpu"]["temperature_c"])
+                self.assertGreater(sample["memory"]["total"], 0)
+                json.dumps(sample, allow_nan=False)
+
     def test_reads_sample_with_or_without_markers(self):
         source = frame()
         self.assertEqual(parse_frame(source), parse_frame(source.split("\n", 1)[1].rsplit("\n", 1)[0]))

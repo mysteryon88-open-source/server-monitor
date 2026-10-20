@@ -57,6 +57,10 @@ or files on the remote server.
   above 1 GiB use GiB even above 1 TiB, matching daily report comparisons.
   RU/EN is a single toggle button. The redundant timezone/history footer text
   is omitted; the last-update timestamp remains visible.
+- Optional `vcgencmd measure_temp` supplies Raspberry Pi CPU temperature in
+  Celsius on each cycle, using the existing collector and a bounded command.
+  Missing, failed or malformed readings are null and hide the separate
+  temperature card below Server details. Windows and demo sources return null.
 - Optional process/traffic details belong only to `latest`; history keeps
   graph metrics and host facts, avoiding repeated seven-day payloads in RAM.
 
@@ -151,7 +155,7 @@ when `ru` is selected. Documentation and static HTML fallback text are English.
   "history": [],
   "latest": {
     "ts": 1791398000000,
-    "cpu": {"percent": 40.3, "cores": 2, "mhz": 2590, "model": "CPU", "iowait": 0.1, "steal": 0.0},
+    "cpu": {"percent": 40.3, "cores": 2, "mhz": 2590, "model": "CPU", "iowait": 0.1, "steal": 0.0, "temperature_c": null},
     "memory": {"percent": 65.1, "used": 1342177280, "total": 2147483648, "available": 805306368},
     "swap": {"percent": 28.9, "used": 620756992, "total": 2147483648, "enabled": true},
     "disk": {"percent": 73.7, "used": 19402514759, "total": 26338836480, "available": 6936325324, "path": "/", "device": "/dev/vda1"},

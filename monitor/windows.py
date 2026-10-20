@@ -298,7 +298,7 @@ class WindowsSampler:
         return {
             "ts": round(received * 1000),
             "cpu": {"percent": cpu_percent, "cores": self._cores, "mhz": self._mhz,
-                    "model": self._model, "iowait": None, "steal": None},
+                    "model": self._model, "iowait": None, "steal": None, "temperature_c": None},
             "memory": memory, "swap": swap, "disk": self._disk(monotonic),
             "processes": self._processes(), "traffic": None,
             "host": {"hostname": self._hostname, "os": self._os, "kernel": self._kernel,

@@ -154,7 +154,7 @@ def parse_frame(text: str) -> dict[str, Any]:
             count = _integer(value)
             if count is not None and (key != "cores" or count > 0):
                 raw[key] = count
-        elif key in ("uptime", "mhz"):
+        elif key in ("uptime", "mhz", "temperature_c"):
             number = _number(value)
             if number is not None and (key != "mhz" or number > 0):
                 raw[key] = number
@@ -220,6 +220,7 @@ class MetricCalculator:
         result = {
             "percent": None, "cores": raw.get("cores"), "mhz": raw.get("mhz"),
             "model": raw.get("model"), "iowait": None, "steal": None,
+            "temperature_c": raw.get("temperature_c"),
         }
         counters = raw.get("cpu")
         if counters is None:

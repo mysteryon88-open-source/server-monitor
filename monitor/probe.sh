@@ -166,8 +166,15 @@ while :; do
         sm_traffic_wait=60
     fi
 
+    sm_temperature=$(sm_run_bounded 1 vcgencmd measure_temp 2>/dev/null) || sm_temperature=
+
     printf '%s\n' '__SM_BEGIN__' 'version	1' || exit 0
     printf '%s\n' "$sm_facts" || exit 0
+    if [ -n "$sm_temperature" ]; then
+        printf '%s\n' "$sm_temperature" | awk '/^temp=[0-9]+([.][0-9]+)?\047C$/ {
+            sub(/^temp=/, ""); sub(/\047C$/, ""); print "temperature_c\t" $0
+        }'
+    fi
     printf 'disk_path\t%s\n' "$sm_disk_path"
     if [ -n "$sm_disk_lines" ]; then
         printf '%s\n' "$sm_disk_lines"

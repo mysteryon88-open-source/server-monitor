@@ -153,6 +153,7 @@ class WindowsSamplerTests(unittest.TestCase):
         first = sampler.sample()
         second = sampler.sample()
         self.assertIsNone(first["cpu"]["percent"])
+        self.assertIsNone(second["cpu"]["temperature_c"])
         self.assertIsInstance(second["ts"], int)
         self.assertGreater(second["memory"]["total"], 0)
         self.assertEqual(second["traffic"], None)

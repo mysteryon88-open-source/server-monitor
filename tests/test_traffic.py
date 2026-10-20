@@ -127,6 +127,7 @@ class OptionalMetricTests(unittest.TestCase):
         self.assertEqual(len({sample["host"]["hostname"] for sample in samples}), 3)
         self.assertEqual(len({sample["memory"]["total"] for sample in samples}), 3)
         self.assertTrue(all(len(sample["processes"]) == 5 for sample in samples))
+        self.assertTrue(all(sample["cpu"]["temperature_c"] is None for sample in samples))
         self.assertEqual(samples[0]["traffic"]["interfaces"][0]["days"][-1]["date"], "2024-03-02")
         self.assertIsNone(samples[2]["traffic"])
 

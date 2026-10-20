@@ -89,6 +89,22 @@ const snapshot = (id, percent, extra = {}) => ({server_id:id, name:`Server ${id}
 const servers = [{id:'0',name:'First <server>',alias:'first',status:'connected'}, {id:'1',name:'Second',alias:'second',status:'connected'}];
 
 async function main() {
+  const temperatureUI = harness();
+  temperatureUI.f.setLanguage('ru');
+  temperatureUI.f.configure(servers, '0', snapshot('0', 25, {cpu:{percent:25, temperature_c:53.5}}));
+  assert.equal(temperatureUI.nodes.get('temperature-reading').hidden, false);
+  assert.equal(temperatureUI.nodes.get('fact-temperature').textContent, '53,5 °C');
+  temperatureUI.f.setLanguage('en');
+  temperatureUI.f.renderData();
+  assert.equal(temperatureUI.nodes.get('fact-temperature').textContent, '53.5 °C');
+  temperatureUI.f.configure(servers, '0', snapshot('0', 25, {cpu:{percent:25, temperature_c:0}}));
+  assert.equal(temperatureUI.nodes.get('temperature-reading').hidden, false);
+  assert.equal(temperatureUI.nodes.get('fact-temperature').textContent, '0.0 °C');
+  for (const value of [undefined, null, '53.5', NaN, Infinity, -1]) {
+    temperatureUI.f.configure(servers, '1', snapshot('1', 25, {cpu:{percent:25, temperature_c:value}}));
+    assert.equal(temperatureUI.nodes.get('temperature-reading').hidden, true);
+    assert.equal(temperatureUI.nodes.get('fact-temperature').textContent, '—');
+  }
   const {f,document,nodes,extras,requests} = harness();
   const normalized = f.normalizeSnapshot({interval:2,server_time:now,latest:sample(now,20),history:[
     sample(now-2000,0),sample(now-12000,40),sample(now-18000,10),sample(now-16000,null),sample(now-2000,10)
